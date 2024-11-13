@@ -1,1 +1,1 @@
-/home/snow/programs/os/target/riscv64gc-unknown-none-elf/debug/os: /home/snow/programs/os/src/lang_items.rs /home/snow/programs/os/src/main.rs
+/home/snow/programs/oslab/rCore/os/target/riscv64gc-unknown-none-elf/debug/os: /home/snow/programs/oslab/rCore/os/src/entry.asm /home/snow/programs/oslab/rCore/os/src/lang_items.rs /home/snow/programs/oslab/rCore/os/src/main.rs
