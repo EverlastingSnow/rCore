@@ -19,3 +19,8 @@ riscv64-unknown-elf-gdb \
     -ex 'file target/riscv64gc-unknown-none-elf/release/os' \
     -ex 'set arch riscv:rv64' \
     -ex 'target remote localhost:1234'
+
+riscv64-unknown-elf-gdb\
+    -ex 'file 00hello_world'\
+    -ex 'set arch riscv:rv64'\
+    -ex 'target remote localhost:1234'
