@@ -31,6 +31,9 @@ DISASM ?= -x
 
 TEST ?= 0
 
+# Check if kernel binary exists and is up to date
+KERNEL_BIN_EXISTS := $(wildcard $(KERNEL_BIN))
+
 build: env switch-check $(KERNEL_BIN)
 
 switch-check:
@@ -46,31 +49,35 @@ env:
 	rustup component add rust-src
 	rustup component add llvm-tools-preview
 
-$(KERNEL_BIN): kernel
+# Check if kernel ELF is newer than kernel bin
+$(KERNEL_BIN): $(KERNEL_ELF)
 	@$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
 
-kernel:
+# Only build the kernel if it needs to be updated
+$(KERNEL_ELF): kernel
+	@echo "Building kernel..."
 	@cd ../user && make build TEST=$(TEST)
 	@echo Platform: $(BOARD)
 	@cp src/linker-$(BOARD).ld src/linker.ld
 	@cargo build --release
 	@rm src/linker.ld
 
+kernel:
+	@echo "Building userland..."
+	@cd ../user && make build TEST=$(TEST)
 
 clean:
 	@cargo clean
 
-disasm: kernel
+disasm: $(KERNEL_ELF)
 	@$(OBJDUMP) $(DISASM) $(KERNEL_ELF) | less
 
-disasm-vim: kernel
+disasm-vim: $(KERNEL_ELF)
 	@$(OBJDUMP) $(DISASM) $(KERNEL_ELF) > $(DISASM_TMP)
 	@vim $(DISASM_TMP)
 	@rm $(DISASM_TMP)
 
 run: run-inner
-
-	
 
 run-inner: build
 ifeq ($(BOARD),qemu)
