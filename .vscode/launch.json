@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Rust GDB Remote Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/home/snow/programs/oslab/rCore/os/target/riscv64gc-unknown-none-elf/release/os",  // 替换为你的程序路径
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "/home/snow/programs/oslab/rCore/",  // 工作目录
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "riscv64-unknown-elf-gdb",  // GDB 调试器路径
+            "miDebuggerServerAddress": "localhost:1234",  // GDB server 地址
+            "setupCommands": [
+                {
+                    "description": "为 gdb 启用整齐打印",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set architecture to riscv:rv64",
+                    "text": "set arch riscv:rv64",
+                    "ignoreFailures": false
+                }
+            ],
+            //"preLaunchTask": "cargo build",  // 调试前构建 Rust 项目
+            "postDebugTask": "",
+            "logging": {
+                "engine": "file"
+            }
+        }
+    ]
+}
+
+//p(A) = 1/2 p(B/A) = 3/4 p(B) = p(B/1) * p(1) 3/4 * 1/2 + 1/2 * 1/2 = 5/8    3/5

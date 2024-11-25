@@ -43,9 +43,9 @@ impl UserStack {
     }
 }
 
-pub fn get_user_stack_range(app_id : usize) -> (usize, usize) {
-    (USER_STACK[app_id].get_sp() - USER_STACK_SIZE, USER_STACK[app_id].get_sp())
-}
+// pub fn get_user_stack_range(app_id : usize) -> (usize, usize) {
+//     (USER_STACK[app_id].get_sp() - USER_STACK_SIZE, USER_STACK[app_id].get_sp())
+// }
 
 pub fn get_base_i(app_id: usize) -> usize {
     APP_BASE_ADDRESS + app_id * APP_SIZE_LIMIT
@@ -58,7 +58,7 @@ pub fn get_num_app() -> usize {
     unsafe { (_num_app as usize as *const usize).read_volatile()}
 }
 
-pub fn load_app() {
+pub fn load_apps() {
     extern "C" {fn _num_app();}
     let num_app_ptr = _num_app as usize as *const usize;
     let num_app = get_num_app();
