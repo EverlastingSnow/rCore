@@ -9,12 +9,25 @@ use crate::config::MAX_APP_NUM;
 use crate::loader::{get_num_app, init_app_cx};
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
-use crate::timer::get_time_ms;
+use crate::timer::{get_time_ms, get_time_us};
 use lazy_static::*;
-use switch::__switch;
+//use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
 
 pub use context::TaskContext;
+
+static mut SWITCH_TIME_START: usize = 0;
+static mut SWITCH_TIME: usize = 0;
+
+unsafe fn __switch(current_task_cx_ptr: *mut TaskContext,next_task_cx_ptr: *const TaskContext) {
+    SWITCH_TIME_START = get_time_us();
+    switch::__switch(current_task_cx_ptr, next_task_cx_ptr);
+    SWITCH_TIME += get_time_us() - SWITCH_TIME_START;
+}
+
+fn get_switch_time() ->usize {
+    unsafe { SWITCH_TIME}
+}
 
 pub struct TaskManagerInner {
     tasks: [TaskControlBlock; MAX_APP_NUM],
@@ -115,6 +128,7 @@ impl TaskManager {
             }
         } else {
             println!("All applications completed!");
+            println!("Task_switch_time {} us", get_switch_time());
             shutdown(false);
         }
     }
