@@ -15,13 +15,13 @@
 mod context;
 
 use crate::{syscall::syscall, task::{suspend_current_and_run_next, user_time_end, kernel_time_end}, timer::set_next_trigger};
-//use crate::task::exit_current_and_run_next;
 use core::arch::global_asm;
 use riscv::register::{
     mtvec::TrapMode, scause::{self, Exception, Trap}, sie, stval, stvec
 };
 
-global_asm!(include_str!("trap.S"));
+//use rv64g to support calc fs
+global_asm!(".attribute arch, \"rv64g\"", include_str!("trap.S"));
 
 /// initialize CSR `stvec` as the entry of `__alltraps`
 pub fn init() {
@@ -36,25 +36,24 @@ pub fn init() {
 #[no_mangle]
 /// handle an interrupt, exception, or system call from user space
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
-    user_time_end();
+    user_time_end();//calc user time cost
     let scause = scause::read(); // get trap cause
     let stval = stval::read(); // get extra value
     match scause.cause() {
         Trap::Exception(Exception::UserEnvCall) => {
-            cx.sepc += 4;
+            cx.sepc += 4;//save next pc
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
         }
         Trap::Exception(Exception::StoreFault) | Trap::Exception(Exception::StorePageFault) => {
             println!("[kernel] PageFault in application, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", stval, cx.sepc);
-            //exit_current_and_run_next();
             panic!("[kernel] Cannot continue!");
         }
         Trap::Exception(Exception::IllegalInstruction) => {
             println!("[kernel] IllegalInstruction in application, kernel killed it.");
-            //exit_current_and_run_next();
             panic!("[kernel] Cannot continue!");
         }
         Trap::Interrupt(scause::Interrupt::SupervisorTimer) => {
+            //set next timer & suspend current task & run next
             set_next_trigger();
             suspend_current_and_run_next();
         }
@@ -66,7 +65,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             );
         }
     }
-    kernel_time_end();
+    kernel_time_end();//calc kernel time cost
     cx
 }
 

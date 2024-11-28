@@ -6,11 +6,6 @@ const TICKS_PER_SEC: usize = 100;
 const MILI_PER_SEC: usize = 1_000;
 const MICRO_PER_SEC: usize = 1_000_000;
 
-// #[repr(C)]
-// pub struct TimeVal {
-//     pub sec: usize,
-//     pub usec: usize,
-// }
 
 pub fn get_time() -> usize {
     time::read()

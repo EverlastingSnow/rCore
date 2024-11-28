@@ -14,6 +14,8 @@ pub extern "C" fn _start() -> ! {
     panic!("unreachable after sys_exit!");
 }
 
+
+//weak-link if there is no main
 #[linkage = "weak"]
 #[no_mangle]
 fn main() -> i32 {
@@ -30,6 +32,8 @@ fn clear_bss() {
     });
 }
 
+
+//wrap syscall
 use syscall::*;
 pub fn write(fd: usize, buf: &[u8]) -> isize { sys_write(fd, buf) }
 pub fn exit(exit_code: i32) -> isize { sys_exit(exit_code) }

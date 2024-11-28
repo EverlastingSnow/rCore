@@ -16,6 +16,7 @@ impl TaskContext {
             s: [0; 12],
         }
     }
+    //initialize TaskContext by __restore->ra & ptr->sp
     pub fn goto_restore(kstack_ptr: usize) -> Self {
         extern "C" {
             fn __restore();

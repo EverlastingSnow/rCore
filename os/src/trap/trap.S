@@ -5,6 +5,12 @@
 .macro LOAD_GP n
     ld x\n, \n*8(sp)
 .endm
+.macro SAVE_F_GP n
+    fsd fs\n, (\n+34)*8(sp)
+.endm
+.macro LOAD_F_GP n
+    fld fs\n, (\n+34)*8(sp)
+.endm
     .section .text
     .globl __alltraps
     .globl __restore
@@ -13,7 +19,7 @@ __alltraps:
     csrrw sp, sscratch, sp
     # now sp->kernel stack, sscratch->user stack
     # allocate a TrapContext on kernel stack
-    addi sp, sp, -34*8
+    addi sp, sp, -46*8
     # save general-purpose registers
     sd x1, 1*8(sp)
     # skip sp(x2), we will save it later
@@ -23,6 +29,12 @@ __alltraps:
     .set n, 5
     .rept 27
         SAVE_GP %n
+        .set n, n+1
+    .endr
+    # save 12 fsr
+    .set n, 0
+    .rept 12
+        SAVE_F_GP %n
         .set n, n+1
     .endr
     # we can use t0/t1/t2 freely, because they were saved on kernel stack
@@ -54,8 +66,14 @@ __restore:
         LOAD_GP %n
         .set n, n+1
     .endr
+    # load 12 fsr
+    .set n, 0
+    .rept 12
+        LOAD_F_GP %n
+        .set n, n+1
+    .endr
     # release TrapContext on kernel stack
-    addi sp, sp, 34*8
+    addi sp, sp, 46*8
     # now sp->kernel stack, sscratch->user stack
     csrrw sp, sscratch, sp
     sret

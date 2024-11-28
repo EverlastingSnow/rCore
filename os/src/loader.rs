@@ -28,6 +28,7 @@ impl KernelStack {
     fn get_sp(&self) -> usize {
         self.data.as_ptr() as usize + KERNEL_STACK_SIZE
     }
+    //push Trapcontext into stack & return the ptr
     pub fn push_context(&self, trap_cx: TrapContext) -> usize {
         let trap_cx_ptr = (self.get_sp() - core::mem::size_of::<TrapContext>()) as *mut TrapContext;
         unsafe {
@@ -43,14 +44,17 @@ impl UserStack {
     }
 }
 
+//TODO
 // pub fn get_user_stack_range(app_id : usize) -> (usize, usize) {
 //     (USER_STACK[app_id].get_sp() - USER_STACK_SIZE, USER_STACK[app_id].get_sp())
 // }
 
+//get app base i
 pub fn get_base_i(app_id: usize) -> usize {
     APP_BASE_ADDRESS + app_id * APP_SIZE_LIMIT
 }
 
+//read app number
 pub fn get_num_app() -> usize {
     extern "C" {
         fn _num_app();
@@ -68,8 +72,8 @@ pub fn load_apps() {
     for i in 0..num_app {
         let base_i = get_base_i(i);
         (base_i..base_i + APP_SIZE_LIMIT).for_each(|addr| unsafe {
-            (addr as *mut u8).write_volatile(0)
-        });
+            (addr as *mut u8).write_volatile(0) 
+        });//clear app address's data
         let src = unsafe {
             core::slice::from_raw_parts(
                 app_start[i] as *const u8,
@@ -79,7 +83,7 @@ pub fn load_apps() {
         let dst = unsafe {
             core::slice::from_raw_parts_mut(base_i as *mut u8, src.len())
         };
-        dst.copy_from_slice(src);
+        dst.copy_from_slice(src);//copy app codes to address
     }
     unsafe {
         asm!("fence.i");

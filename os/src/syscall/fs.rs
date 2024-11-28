@@ -8,6 +8,7 @@ const FD_STDOUT: usize = 1;
 
 /// write buf of length `len`  to a file with `fd`
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize { 
+    //TODO
     // let (app_range, app_id)= get_current_app_range_and_id();
     // println!("{}, {}, {}", app_range.0, app_range.1, app_id);
     // let stack_range = get_user_stack_range(app_id);

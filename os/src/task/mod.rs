@@ -19,6 +19,8 @@ pub use context::TaskContext;
 static mut SWITCH_TIME_START: usize = 0;
 static mut SWITCH_TIME: usize = 0;
 
+
+//implement switch and calc cost time
 unsafe fn __switch(current_task_cx_ptr: *mut TaskContext,next_task_cx_ptr: *const TaskContext) {
     SWITCH_TIME_START = get_time_us();
     switch::__switch(current_task_cx_ptr, next_task_cx_ptr);
@@ -48,6 +50,7 @@ pub struct TaskManager {
     inner: UPSafeCell<TaskManagerInner>,
 }
 
+//initialize TaskManager
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
         let num_app = get_num_app();
@@ -132,11 +135,13 @@ impl TaskManager {
             shutdown(false);
         }
     }
+    //calc kernel time: now - st
     fn kernel_time_end(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
         inner.tasks[current].kernel_time += inner.refresh_stop_watch();
     }
+    //calc user time: now - st
     fn user_time_end(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;

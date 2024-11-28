@@ -6,6 +6,7 @@
 #![no_std]
 #![no_main]
 use core::arch::global_asm;
+use core::arch::asm;
 use log::*;
 #[macro_use]
 mod console;
@@ -24,7 +25,29 @@ pub mod trap;
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
 
-
+//init fpu to support fs
+fn clear_fpu(){
+    unsafe {
+        for i in 0..32 {
+            asm!("fcvt.d.w f{i}, x0", i = in(reg) i);
+            asm!("fmv.d.x f{i}, x0", i = in(reg) i);
+            asm!("fmv.w.x f{i}, x0", i = in(reg) i);
+        }
+    }
+}
+fn init_fpu() {
+    unsafe {
+        asm!(
+            r#"
+        li t0, 0x4000 # bit 14 is FS most significant bit
+        li t2, 0x2000 # bit 13 is FS least significant bit
+        csrrc x0, sstatus, t0
+        csrrs x0, sstatus, t2
+        "#
+        );
+    }
+    clear_fpu();
+}
 
 fn clear_bss() {
     extern "C" {
@@ -53,6 +76,7 @@ pub fn rust_main() -> !{
         fn boot_stack_top(); // stack top
     }
     clear_bss();    
+    init_fpu();
     logging::init();
     println!("[kernel] Hello, world!");
     trace!(
