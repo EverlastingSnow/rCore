@@ -1,5 +1,10 @@
 # rCore
+
+如果要输出调试信息 export DEBUG即可，查看logging.rs了解详细信息
+
 cd os/
+make run即可运行，详见makefile
+cargo 设置见cargo.toml
 
 build项目
 cargo build --release

@@ -4,6 +4,7 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
+use log::info;
 use crate::config::MAX_APP_NUM;
 use crate::loader::{get_num_app, init_app_cx};
 use crate::sbi::shutdown;
@@ -88,6 +89,7 @@ impl TaskManager {
             let current = inner.current_task;
             inner.tasks[next].task_status = TaskStatus::Running;
             inner.current_task = next;
+            info!("Task_{} Running", next);
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
             let next_task_cx_ptr = &inner.tasks[next].task_cx as *const TaskContext;
             drop(inner);
@@ -118,10 +120,12 @@ fn mark_current_exited() {
 
 pub fn suspend_current_and_run_next() {
     mark_current_suspended();
+    info!("Suspend task_{}", TASK_MANAGER.inner.exclusive_access().current_task);
     run_next_task();
 }
 
 pub fn exit_current_and_run_next() {
     mark_current_exited();
+    info!("Exited task_{}", TASK_MANAGER.inner.exclusive_access().current_task);
     run_next_task();
 }
