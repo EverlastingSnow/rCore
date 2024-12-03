@@ -16,7 +16,13 @@
     .globl __restore
     .align 2
 __alltraps:
+    csrr tp, sstatus
+    andi tp, tp, 0x100
+    beqz tp, __user_trap_start
+    j __real_entry
+__user_trap_start:
     csrrw sp, sscratch, sp
+__real_entry:
     # now sp->kernel stack, sscratch->user stack
     # allocate a TrapContext on kernel stack
     addi sp, sp, -46*8
@@ -58,6 +64,9 @@ __restore:
     csrw sstatus, t0
     csrw sepc, t1
     csrw sscratch, t2
+    andi t0, t0, 0x100
+    bnez t0, __kernel_trap_end
+__user_trap_end:
     # restore general-purpuse registers except sp/tp
     ld x1, 1*8(sp)
     ld x3, 3*8(sp)
@@ -76,4 +85,22 @@ __restore:
     addi sp, sp, 46*8
     # now sp->kernel stack, sscratch->user stack
     csrrw sp, sscratch, sp
+    sret
+__kernel_trap_end:
+    # restore general-purpuse registers except sp/tp
+    ld x1, 1*8(sp)
+    ld x3, 3*8(sp)
+    .set n, 5
+    .rept 27
+        LOAD_GP %n
+        .set n, n+1
+    .endr
+    # load 12 fsr
+    .set n, 0
+    .rept 12
+        LOAD_F_GP %n
+        .set n, n+1
+    .endr
+    # release TrapContext on kernel stack
+    addi sp, sp, 46*8
     sret

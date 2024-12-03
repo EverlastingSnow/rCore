@@ -16,9 +16,9 @@ mod context;
 
 use crate::{syscall::syscall, task::{suspend_current_and_run_next, user_time_end, kernel_time_end}, timer::set_next_trigger};
 use core::arch::global_asm;
-use riscv::register::{
-    mtvec::TrapMode, scause::{self, Exception, Trap}, sie, stval, stvec
-};
+use riscv::{interrupt, register::{
+    mcause::Interrupt, mtvec::TrapMode, scause::{self, Exception, Trap}, sie, stval, stvec
+}};
 
 //use rv64g to support calc fs
 global_asm!(".attribute arch, \"rv64g\"", include_str!("trap.S"));
@@ -33,9 +33,28 @@ pub fn init() {
     }
 }
 
+static mut KERNEL_INTERRUPT_TRIGGERED: bool = false;
+
+pub fn check_kernel_interrupt() -> bool {
+    unsafe { (&raw mut KERNEL_INTERRUPT_TRIGGERED as *mut bool ).read_volatile()}
+}
+
+pub fn mark_kernel_interrupt() {
+    unsafe {
+        (&raw mut KERNEL_INTERRUPT_TRIGGERED as *mut bool).write_volatile(true);
+    }
+}
+
+use riscv::register::sstatus;
 #[no_mangle]
-/// handle an interrupt, exception, or system call from user space
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+    match sstatus::read().spp() {
+        sstatus::SPP::Supervisor => kernel_trap_handler(cx),
+        sstatus::SPP::User => user_trap_handler(cx),
+    }
+}
+
+pub fn user_trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     user_time_end();//calc user time cost
     let scause = scause::read(); // get trap cause
     let stval = stval::read(); // get extra value
@@ -66,6 +85,25 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         }
     }
     kernel_time_end();//calc kernel time cost
+    cx
+}
+
+pub fn kernel_trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+    let scause = scause::read();
+    let stval = stval::read();
+    match scause.cause() {
+        Trap::Interrupt(scause::Interrupt::SupervisorTimer) => {
+            println!("kernel interrupt: timer slice out");
+            mark_kernel_interrupt();
+            set_next_trigger();
+        }
+        Trap::Exception(Exception::StoreFault) | Trap::Exception(Exception::StorePageFault) => {
+            panic!("[kernel] PageFault in kernel, bad addr = {:#x}, bad instruction = {:#x}, kernel killed it.", stval, cx.sepc);
+        }
+        _ => {
+            panic!("Unknown kernel exception or interrupt!");
+        }
+    }
     cx
 }
 
