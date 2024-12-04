@@ -19,6 +19,7 @@ use core::arch::global_asm;
 use riscv::{interrupt, register::{
     mcause::Interrupt, mtvec::TrapMode, scause::{self, Exception, Trap}, sie, stval, stvec
 }};
+use log::*;
 
 //use rv64g to support calc fs
 global_asm!(".attribute arch, \"rv64g\"", include_str!("trap.S"));
@@ -93,7 +94,7 @@ pub fn kernel_trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let stval = stval::read();
     match scause.cause() {
         Trap::Interrupt(scause::Interrupt::SupervisorTimer) => {
-            println!("kernel interrupt: timer slice out");
+            info!("kernel interrupt: timer slice out");
             mark_kernel_interrupt();
             set_next_trigger();
         }

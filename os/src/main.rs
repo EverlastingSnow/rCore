@@ -106,7 +106,7 @@ pub fn rust_main() -> !{
     unsafe {sstatus::set_sie()};
     loop {
         if trap::check_kernel_interrupt() {
-            println!("kernel interrupt returned");
+            info!("kernel interrupt returned");
             break;
         }
     }
