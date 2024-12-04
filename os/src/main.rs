@@ -65,7 +65,7 @@ fn clear_bss() {
 pub fn rust_main() -> !{
     extern "C" {
         fn stext(); // begin addr of text segment
-        fn etext(); // end addr of text segment
+        fn etext(); // end add r of text segment
         fn srodata(); // start addr of Read-Only data segment
         fn erodata(); // end addr of Read-Only data ssegment
         fn sdata(); // start addr of data segment
