@@ -2,7 +2,7 @@ mod context;
 mod switch;
 
 #[allow(clippy::module_inception)]
-mod task;
+pub mod task;
 
 use log::info;
 use crate::config::MAX_APP_NUM;
@@ -10,6 +10,7 @@ use crate::loader::{get_num_app, init_app_cx};
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::timer::{get_time_ms, get_time_us};
+use crate::syscall::{self, MAX_SYSCALL_NUM};
 use lazy_static::*;
 //use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
@@ -59,6 +60,8 @@ lazy_static! {
             task_status: TaskStatus::UnInit,
             user_time: 0,
             kernel_time: 0,
+            start_time: 0,
+            syscall_times: [0; MAX_SYSCALL_NUM],
         }; MAX_APP_NUM];
         for (i, task) in tasks.iter_mut().enumerate() {
             task.task_cx = TaskContext::goto_restore(init_app_cx(i));
@@ -83,6 +86,7 @@ impl TaskManager {
         let task0 = &mut inner.tasks[0];
         task0.task_status = TaskStatus::Running;
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
+        task0.start_time = get_time_ms();
         inner.refresh_stop_watch();
         drop(inner);
         let mut _unused = TaskContext::zero_init();
@@ -121,6 +125,9 @@ impl TaskManager {
             let mut inner = self.inner.exclusive_access();
             let current = inner.current_task;
             inner.tasks[next].task_status = TaskStatus::Running;
+            if inner.tasks[next].start_time == 0 {
+                inner.tasks[next].start_time = get_time_ms();
+            }
             inner.current_task = next;
             info!("Task_{} Running", next);
             let current_task_cx_ptr = &mut inner.tasks[current].task_cx as *mut TaskContext;
@@ -146,6 +153,18 @@ impl TaskManager {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
         inner.tasks[current].user_time += inner.refresh_stop_watch();
+    }
+    //get task info
+    fn get_current_task_info(&self) -> TaskControlBlock {
+        let inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current]
+    }
+
+    fn record_syscall_times(&self, syscall_id: usize){
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].syscall_times[syscall_id] += 1;
     }
 }
 pub fn run_first_task() {
@@ -182,4 +201,12 @@ pub fn kernel_time_end() {
 
 pub fn user_time_end() {
     TASK_MANAGER.user_time_end();
+}
+
+pub fn get_current_task_info() -> TaskControlBlock{
+    TASK_MANAGER.get_current_task_info()
+}
+
+pub fn record_syscall_times(syscall_id: usize) {
+    TASK_MANAGER.record_syscall_times(syscall_id);
 }
