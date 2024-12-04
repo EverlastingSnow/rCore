@@ -4,7 +4,7 @@
 #[macro_use]
 pub mod console;
 mod lang_items;
-mod syscall;
+pub mod syscall;
 
 #[no_mangle]
 #[link_section = ".text.entry"]
@@ -39,3 +39,4 @@ pub fn write(fd: usize, buf: &[u8]) -> isize { sys_write(fd, buf) }
 pub fn exit(exit_code: i32) -> isize { sys_exit(exit_code) }
 pub fn yield_() -> isize { sys_yield() }
 pub fn get_time() -> isize {sys_get_time()}
+pub fn task_info(ptr:*mut TaskInfo) -> isize {sys_task_info(ptr)}

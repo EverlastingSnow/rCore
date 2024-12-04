@@ -4,6 +4,7 @@ const SYSCALL_WRITE: usize = 64;
 const SYSCALL_EXIT: usize = 93;
 const SYSCALL_YIELD: usize = 124;
 const SYSCALL_GET_TIME:usize = 169;
+const SYSCALL_TASK_INFO: usize = 410;
 
 
 //call env call
@@ -35,4 +36,21 @@ pub fn sys_yield() -> isize {
 
 pub fn sys_get_time() -> isize {
     syscall(SYSCALL_GET_TIME, [0, 0, 0])
+}
+
+pub enum TaskStatus {
+    UnInit,
+    Ready,
+    Running,
+    Exited,
+}
+pub struct TaskInfo {
+    pub status: TaskStatus,
+    pub syscall_times: [u32; 5],
+    pub task_call_times: usize
+}
+
+
+pub fn sys_task_info(ptr:*mut TaskInfo) -> isize {
+    syscall(SYSCALL_TASK_INFO, [ptr as usize, 0, 0])
 }
