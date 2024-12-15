@@ -5,6 +5,7 @@
 
 #![no_std]
 #![no_main]
+#![feature(alloc_error_handler)]
 use core::arch::global_asm;
 use core::arch::asm;
 use log::*;
@@ -17,10 +18,14 @@ mod loader;
 mod sbi;
 mod sync;
 mod timer;
+mod mm;
 pub mod task;
 pub mod syscall;
 pub mod trap;
+extern crate bitflags;
 
+
+extern crate alloc;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -76,6 +81,11 @@ pub fn rust_main() -> !{
         fn boot_stack_top(); // stack top
     }
     clear_bss();    
+
+    //heap_allocator test
+    // mm::heap_allocator::init_heap();
+    // mm::heap_allocator::heap_test();
+
     init_fpu();
     logging::init();
     println!("[kernel] Hello, world!");
@@ -102,6 +112,7 @@ pub fn rust_main() -> !{
     trap::enable_time_interrupt();
     timer::set_next_trigger();
 
+
     use riscv::register::sstatus;
     unsafe {sstatus::set_sie()};
     loop {
@@ -114,3 +125,4 @@ pub fn rust_main() -> !{
     task::run_first_task();
     panic!("Unreachable in rust_main!");
 }
+//git update-ref refs/stash fa307fc6b22afeb444b306cf957f688c15edde62 -m "Recovered stash"

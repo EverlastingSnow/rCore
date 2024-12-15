@@ -10,7 +10,7 @@ use crate::loader::{get_num_app, init_app_cx};
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
 use crate::timer::{get_time_ms, get_time_us};
-use crate::syscall::{self, MAX_SYSCALL_NUM};
+use crate::syscall::MAX_SYSCALL_NUM;
 use lazy_static::*;
 //use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};

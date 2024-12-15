@@ -8,6 +8,10 @@ pub struct TrapContext {
     pub sstatus: Sstatus,
     /// CSR sepc
     pub sepc: usize,
+    // kernel stack start
+    pub kernel_satp: usize,
+    pub kernel_sp: usize,
+    pub trap_handler: usize,
 }
 
 impl TrapContext {

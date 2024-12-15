@@ -16,9 +16,9 @@ mod context;
 
 use crate::{syscall::syscall, task::{suspend_current_and_run_next, user_time_end, kernel_time_end}, timer::set_next_trigger};
 use core::arch::global_asm;
-use riscv::{interrupt, register::{
-    mcause::Interrupt, mtvec::TrapMode, scause::{self, Exception, Trap}, sie, stval, stvec
-}};
+use riscv::register::{
+    mtvec::TrapMode, scause::{self, Exception, Trap}, sie, stval, stvec
+};
 use log::*;
 
 //use rv64g to support calc fs
